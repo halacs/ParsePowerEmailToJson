@@ -51,3 +51,31 @@ ELMŰ-ÉMÁSZ Ügyfélszolgálat
 ```text
 {"emailTime": 1475687521, "azonosito": 012345678901, "meroszam": 9876543210, "meroallas": 80333, "leolvasasdatumaPdf": 1475618400}
 ```
+
+# Minta futás 3
+
+## Bemenet:
+
+```text
+Tisztelt Ügyfelünk!
+Fényképes mérőállás bejelentését társaságunk fogadta.
+A beküldött fénykép és mérőállás feldolgozását megkezdtük.
+Sikeres feldolgozást követően jelenik meg a mérőállások listáján. Kérjük
+szíves türelmét!
+A következő mérőállás(ok) kerültek be a rendszerünkbe:
+
+Gyáriszám       Mérőállás
+
+9876543210               1457
+Köszönjük mérőállás bejelentését!
+
+Üdvözlettel:
+
+E.ON Ügyfélszolgálati Kft.
+```
+
+## Kimenet
+
+```text
+{"emailTime": 1711962050, "azonosito": 0, "meroszam": 9876543210, "meroallas": 1457, "leolvasasdatumaPdf": ""}
+```
