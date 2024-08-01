@@ -79,3 +79,41 @@ E.ON Ügyfélszolgálati Kft.
 ```text
 {"emailTime": 1711962050, "azonosito": 0, "meroszam": 9876543210, "meroallas": 1457, "leolvasasdatumaPdf": ""}
 ```
+
+# Minta futás 3
+MVM Next összevont 2024 augusztustól.
+
+A HTML levélhez van plain text is így azt parsoljuk.
+
+## Bemenet:
+
+```text
+Kedves X Y!
+
+Sikeres diktálását az alábbi adatokkal rögzítettük:
+
+
+Gyári szám 	Diktált érték
+9876543210 	1457 kWh
+
+Diktálás időpontja: 2024.08.01. 09:10
+
+Gázmérőt diktált? Ha két éves leolvasás között egymás után kétszer, vagy 
+összesen háromszor nem, vagy nem időben diktálja be gázmérője állását, a 
+következő éves leolvasás után automatikusan átállítjuk hőmérsékletfüggő 
+részszámlázásra.
+
+ 
+
+
+A jelenlegi ügyintézéssel kapcsolatban szeretnénk megismerni a véleményét. 
+Kérjük, kattintson az alábbi linkre:
+Ügyfélelégedettség-mérés
+...
+```
+
+## Kimenet
+
+```text
+{"emailTime": 1711962050, "azonosito": 0, "meroszam": 9876543210, "meroallas": 1457, "leolvasasdatumaPdf": ""}
+```

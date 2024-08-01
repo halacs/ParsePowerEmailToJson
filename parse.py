@@ -8,6 +8,8 @@ import base64
 import tempfile
 import time
 import datetime
+from dateutil import tz
+from datetime import datetime
 from pypdf import PdfReader
 
 # https://regex101.com/
@@ -15,6 +17,7 @@ regex_str_azonosito = '.*megadott adatokkal a\(z\) ([0-9]+) azonosító számon.
 regex_str_meroazonosito_meroallas_elmuemasz_email = '.*[^0-9]*([0-9]+) - ([0-9]+) kWh Hatásos 24h \/kWh.*'
 regex_str_meroazonosito_meroallas_pdf = 'Leolvasás oka[ ]+([0-9]+).+Hatásos 24h \/kWh.+[0-9]+.+[0-9]{4}.[0-9]{2}.[0-9]{2}[^0-9]+([0-9]+)[^0-9]+[0-9]{4}.[0-9]{2}.[0-9]{2}.+Normál.+rögzítés.+Leolvasás dátuma: ([0-9]{4}.[0-9]{2}.[0-9]{2})'
 regex_str_meroazonosito_meroallas_eon_email = 'Gyáriszám.+Mérőállás[^0-9]+([0-9]+)[^0-9]+([0-9]+)[^0-9]+Köszönjük'
+regex_str_meroazonosito_meroallas_datumido_mvmnext_email = 'Gyári szám 	Diktált érték\n([0-9]+)[^\d]+(.*) kWh\n\nDiktálás időpontja: (.*)\n'
 
 def eonMeroallasMeroszam(body):
     rd = re.search(regex_str_meroazonosito_meroallas_eon_email, body)
@@ -41,6 +44,28 @@ def elmuemaszMeroallasMeroszam(body):
     meroallas = rd.group(2)
 
     return meroszam, meroallas
+
+def mvmnextMeroallasMeroszamDatumido(body):
+    rd = re.search(regex_str_meroazonosito_meroallas_datumido_mvmnext_email, body)
+    if rd is None:
+        raise Exception("MVM Next levél? Nem találom a mérőszámot, a mérőállást és a leolvasás idejét benne!")
+
+    if len(rd.groups()) != 3:
+        raise Exception("Nem az elvart szamu regex groupot kaptam! Ellenorizd a regexpet!")
+
+    meroszam = rd.group(1)
+    # drop all non digit characters to be a valid string represented number
+    meroallas = ""
+    for c in rd.group(2):
+        if c.isdigit():
+            meroallas = meroallas + c
+
+    leolvasasido = rd.group(3)
+    t = datetime.strptime(leolvasasido,"%Y.%m.%d. %H:%M")
+    leolvasasidoTs = int(t.timestamp())
+
+    return meroszam, meroallas, leolvasasidoTs
+
 
 def elmuemaszCsatolmany(mail):
     meroszam = ""
@@ -83,7 +108,7 @@ def rogzitesAzonosito(body):
     return azonosito
 
 def parse(f):
-    leolvasasdatumaPdf = None
+    leolvasasdatumaContent = None
     meroszam = ""
     meroallas = ""
     azonosito = ""
@@ -94,7 +119,7 @@ def parse(f):
     #print(mail.delivered_to)
     #print(mail.to)
     #print(mail.body)
-    mailTimestamp = int(time.mktime(mail.date.timetuple()))
+    mailTimestamp = int(mail.date.timestamp())
     body = mail.body #.replace('\n', '')
 
     try:
@@ -108,7 +133,7 @@ def parse(f):
         #sys.stderr.write("%s\n" %e)
         try:
             # Néhány levél érkezett úgy, hogy pdf csatolmány volt hozzá
-            meroszam, meroallas, leolvasasdatumaPdf = elmuemaszCsatolmany(mail)
+            meroszam, meroallas, leolvasasdatumaContent = elmuemaszCsatolmany(mail)
             try:
                 azonosito = rogzitesAzonosito(body)
             except Exception as e:
@@ -121,7 +146,14 @@ def parse(f):
                 meroszam, meroallas = eonMeroallasMeroszam(body)
                 azonosito = "0"
             except Exception as e:
-                sys.stderr.write("ERROR! Sehogyse sikerult parsolni a fájlt!\n" %e)
+                #sys.stderr.write("%s\n" %e)
+                try:
+                    # Az éves fényképes Android appos leolvasásoknál meg ilyen email jön.
+                    # Ebben a formátumban nincs diktálás azonosító szám megadva.
+                    meroszam, meroallas, leolvasasdatumaContent = mvmnextMeroallasMeroszamDatumido(body)
+                    azonosito = "0"
+                except Exception as e:
+                    sys.stderr.write("ERROR! Sehogyse sikerult parsolni a fájlt!\n" %e)
 
     if len(azonosito) == 0:
         raise Exception("Hibás mező érték: azonosito")
@@ -132,8 +164,8 @@ def parse(f):
     if len(meroallas) == 0:
         raise Exception("Hibás mező érték: meroallas")
 
-    if leolvasasdatumaPdf != None:
-        if abs(leolvasasdatumaPdf - mailTimestamp) > 24 * 60 * 60:   # 24 hour
+    if leolvasasdatumaContent != None:
+        if abs(leolvasasdatumaContent - mailTimestamp) > 24 * 60 * 60:   # 24 hour
             sys.stderr.write("FIGYELMEZTETÉS! Az emailből jövő időpont jelentősen eltér a pdf-ben lévő dátumtól!\n")
 
     return {
@@ -141,7 +173,7 @@ def parse(f):
         'azonosito' : int(azonosito),
         'meroszam' : int(meroszam),
         'meroallas' : int(meroallas),
-        'leolvasasdatumaPdf' : leolvasasdatumaPdf,
+        'leolvasasdatumaContent' : leolvasasdatumaContent,
     }
 
 def fromFile():
@@ -181,7 +213,7 @@ def parsePdf(fileName):
     meroallas = rd.group(2)
     leolvasasdatuma = rd.group(3)
 
-    leolvasasdatumaTs = int(time.mktime(datetime.datetime.strptime(leolvasasdatuma,"%Y.%m.%d").timetuple()))
+    leolvasasdatumaTs = int(datetime.strptime(leolvasasdatuma,"%Y.%m.%d").timestamp())
 
     return meroszam,meroallas,leolvasasdatumaTs
 
