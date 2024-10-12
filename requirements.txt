@@ -1,0 +1,7 @@
+dateutils==0.6.12
+mail-parser==3.15.0
+pypdf==5.0.1
+python-dateutil==2.9.0.post0
+pytz==2024.2
+simplejson==3.19.3
+six==1.16.0
