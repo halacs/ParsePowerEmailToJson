@@ -13,11 +13,11 @@ from datetime import datetime
 from pypdf import PdfReader
 
 # https://regex101.com/
-regex_str_azonosito = '.*megadott adatokkal a\(z\) ([0-9]+) azonosító számon.*'
-regex_str_meroazonosito_meroallas_elmuemasz_email = '.*[^0-9]*([0-9]+) - ([0-9]+) kWh Hatásos 24h \/kWh.*'
-regex_str_meroazonosito_meroallas_pdf = 'Leolvasás oka[ ]+([0-9]+).+Hatásos 24h \/kWh.+[0-9]+.+[0-9]{4}.[0-9]{2}.[0-9]{2}[^0-9]+([0-9]+)[^0-9]+[0-9]{4}.[0-9]{2}.[0-9]{2}.+Normál.+rögzítés.+Leolvasás dátuma: ([0-9]{4}.[0-9]{2}.[0-9]{2})'
-regex_str_meroazonosito_meroallas_eon_email = 'Gyáriszám.+Mérőállás[^0-9]+([0-9]+)[^0-9]+([0-9]+)[^0-9]+Köszönjük'
-regex_str_meroazonosito_meroallas_datumido_mvmnext_email = 'Gyári szám 	Diktált érték\n([0-9]+)[^\d]+(.*) kWh\n\nDiktálás időpontja: (.*)\n'
+regex_str_azonosito = r'.*megadott adatokkal a\(z\) ([0-9]+) azonosító számon.*'
+regex_str_meroazonosito_meroallas_elmuemasz_email = r'.*[^0-9]*([0-9]+) - ([0-9]+) kWh Hatásos 24h \/kWh.*'
+regex_str_meroazonosito_meroallas_pdf = r'Leolvasás oka[ ]+([0-9]+).+Hatásos 24h \/kWh.+[0-9]+.+[0-9]{4}.[0-9]{2}.[0-9]{2}[^0-9]+([0-9]+)[^0-9]+[0-9]{4}.[0-9]{2}.[0-9]{2}.+Normál.+rögzítés.+Leolvasás dátuma: ([0-9]{4}.[0-9]{2}.[0-9]{2})'
+regex_str_meroazonosito_meroallas_eon_email = r'Gyáriszám.+Mérőállás[^0-9]+([0-9]+)[^0-9]+([0-9]+)[^0-9]+Köszönjük'
+regex_str_meroazonosito_meroallas_datumido_mvmnext_email = r'Gyári szám 	Diktált érték\n([0-9]+)[^\d]+(.*) kWh\n\nDiktálás időpontja: (.*)\n'
 
 def eonMeroallasMeroszam(body):
     rd = re.search(regex_str_meroazonosito_meroallas_eon_email, body)
