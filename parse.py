@@ -17,7 +17,8 @@ regex_str_azonosito = r'.*megadott adatokkal a\(z\) ([0-9]+) azonosító számon
 regex_str_meroazonosito_meroallas_elmuemasz_email = r'.*[^0-9]*([0-9]+) - ([0-9]+) kWh Hatásos 24h \/kWh.*'
 regex_str_meroazonosito_meroallas_pdf = r'Leolvasás oka[ ]+([0-9]+).+Hatásos 24h \/kWh.+[0-9]+.+[0-9]{4}.[0-9]{2}.[0-9]{2}[^0-9]+([0-9]+)[^0-9]+[0-9]{4}.[0-9]{2}.[0-9]{2}.+Normál.+rögzítés.+Leolvasás dátuma: ([0-9]{4}.[0-9]{2}.[0-9]{2})'
 regex_str_meroazonosito_meroallas_eon_email = r'Gyáriszám.+Mérőállás[^0-9]+([0-9]+)[^0-9]+([0-9]+)[^0-9]+Köszönjük'
-regex_str_meroazonosito_meroallas_datumido_mvmnext_email = r'Gyári szám 	Diktált érték\n([0-9]+)[^\d]+(.*) kWh\n\nDiktálás időpontja: (.*)\n'
+regex_str_meroazonosito_meroallas_datumido_mvmnext_email = r'Gyári szám        Diktált érték\n([0-9]+)[^\d]+(.*) kWh\n\nDiktálás időpontja: (.*)\n'
+regex_str_meroazonosito_meroallas_datumido_mvmnext_email_HTML_from_20260701 = r'Gyári szám.*?>\s*(\d+)\s*<.*?>\s*([\d\s]+)\s*kWh\s*<.*?Diktálás időpontja:\s*([\d.:\s]+)'
 
 def eonMeroallasMeroszam(body):
     rd = re.search(regex_str_meroazonosito_meroallas_eon_email, body)
@@ -46,9 +47,12 @@ def elmuemaszMeroallasMeroszam(body):
     return meroszam, meroallas
 
 def mvmnextMeroallasMeroszamDatumido(body):
-    rd = re.search(regex_str_meroazonosito_meroallas_datumido_mvmnext_email, body)
+    # 2026.07.01. - megkaptam az első HTML formázott levelet tőlük ezért már arra is figyelni kell. Jó kis spagetti lesz ez, de nem baj.
+    rd = re.search(regex_str_meroazonosito_meroallas_datumido_mvmnext_email_HTML_from_20260701, body, re.DOTALL)
     if rd is None:
-        raise Exception("MVM Next levél? Nem találom a mérőszámot, a mérőállást és a leolvasás idejét benne!")
+        rd = re.search(regex_str_meroazonosito_meroallas_datumido_mvmnext_email, body)
+        if rd is None:
+            raise Exception("MVM Next levél? Nem találom a mérőszámot, a mérőállást és a leolvasás idejét benne!")
 
     if len(rd.groups()) != 3:
         raise Exception("Nem az elvart szamu regex groupot kaptam! Ellenorizd a regexpet!")
